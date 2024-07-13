@@ -3,11 +3,11 @@ import { StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
 import ConfirmModal from './ConfirmModal'
 
 export default function Password({ service, password, isEditing, handleClick, handleClickDelete }) {
-    const [clickedDelete, setClickedDelete] = useState()
+    const [clickedDelete, setClickedDelete] = useState();
 
     const handleClickConfirm = () => {
-      handleClickDelete(service)
-      setClickedDelete(false)
+      handleClickDelete(service);
+      setClickedDelete(false);
     }
 
     return (
