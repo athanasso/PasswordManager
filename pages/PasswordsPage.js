@@ -1,60 +1,71 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, Button } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
-import ErrorPage from './ErrorPage'
-import Password from '../components/Password'
-import PasswordModal from '../components/PasswordModal'
-import { getAllPasswords, deletePassword } from '../helpers/helper'
+import Password from '../components/Password';
+import PasswordModal from '../components/PasswordModal';
+import { getAllPasswords, deletePassword } from '../helpers/helper';
 import { BlurView } from 'expo-blur';
-import { useIsFocused } from '@react-navigation/native'
+import { useIsFocused } from '@react-navigation/native';
 
 export default function PasswordsPage({ navigation }) {
-    const [secureStoreAvailable, setSecureStoreAvailable] = useState()
-    const [passwords, setPasswords] = useState()
-    const [clickedPassword, setClickedPassword] = useState()
-    const [isEditing, setIsEditing] = useState(false)
+    const [passwords, setPasswords] = useState([]);
+    const [clickedPassword, setClickedPassword] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
 
-    const isFocused = useIsFocused()
+    const isFocused = useIsFocused();
     
-    const getPasswords = async () => setPasswords(await getAllPasswords())
+    const getPasswords = async () => {
+        try {
+            const response = await getAllPasswords();
+            console.log('Response from getAllPasswords:', response); 
+            if (response && Array.isArray(response.credentials)) {
+                setPasswords(response.credentials);
+            } else {
+                setPasswords([]);
+            }
+        } catch (error) {
+            console.error('Failed to fetch passwords:', error);
+            setPasswords([]);
+        }
+    };
 
-    const handleClickDelete = async siteId => {
-        await deletePassword(siteId)
-        getPasswords()
-    }
+    const handleClickDelete = async (password) => {
+        await deletePassword(password.id);
+        getPasswords();
+    };
 
     useEffect(() => {
         (async () => {
-            const isAvailable = await SecureStore.isAvailableAsync()
-            setSecureStoreAvailable(isAvailable)
-            if(isAvailable) {
-                setIsEditing(false)
-                getPasswords()
-            }
+            setIsEditing(false);
+            getPasswords();
         })();
-    }, [isFocused])
+    }, [isFocused]);
 
-    if(!secureStoreAvailable) {
-        return <ErrorPage message="Device not compatible" />
-    }
-
-    else if(passwords === undefined) {
-        return <ErrorPage message="Loading"/>
-    }
+    const renderPasswords = () => {
+        return passwords.map(password => (
+            <Password
+                key={password.id}
+                service={password.service}
+                password={password.password}
+                isEditing={isEditing}
+                handleClick={() => setClickedPassword(password)}
+                handleClickDelete={() => handleClickDelete(password)}
+            />
+        ));
+    };
 
     return (
         <View style={styles.container}>
-                <View style={styles.header}>
-                    <Button title="Sort" />
-                    <Button title="Edit" onPress={() => setIsEditing(!isEditing)}/>
-                    <Button title="Add" onPress={() => navigation.navigate('Add Password')}/>
-                </View>
-                <ScrollView style={styles.listContainer}>
-                    {!passwords
-                        ? <Text style={styles.textEmptyList}>No passwords added</Text>
-                        : passwords.map(password => <Password key={password.siteId} siteId={password.siteId} password={password.password} isEditing={isEditing} handleClick={() => setClickedPassword(password)} handleClickDelete={handleClickDelete}/>)
-                    }
-                </ScrollView>
+            <View style={styles.header}>
+                <Button title="Sort" />
+                <Button title="Edit" onPress={() => setIsEditing(!isEditing)} />
+                <Button title="Add" onPress={() => navigation.navigate('Add Password')} />
+            </View>
+            <ScrollView style={styles.listContainer}>
+                {passwords.length === 0
+                    ? <Text style={styles.textEmptyList}>No passwords added</Text>
+                    : renderPasswords()
+                }
+            </ScrollView>
             {clickedPassword &&
                 <BlurView intensity={80} tint={'light'} onPress={() => setClickedPassword(undefined)} style={[StyleSheet.absoluteFill, styles.nonBlurredContent]}>
                     <PasswordModal loginId={clickedPassword.loginId} password={clickedPassword.password} handleClickOutside={() => setClickedPassword(undefined)} />

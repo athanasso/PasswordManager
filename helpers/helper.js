@@ -1,23 +1,66 @@
-import * as SecureStore from 'expo-secure-store';
-
 export const getAllPasswords = async () => {
-  const data = await SecureStore.getItemAsync('passwords')
-  return data ? JSON.parse(data) : []
-}
-
-export const addPassword = async (siteId, loginId, password) => {
-  const passwords = await getAllPasswords()
-  const data = {
-    siteId,
-    loginId,
-    password
+  try {
+    const response = await fetch('http://192.168.1.109:9500/api/credentials');
+    
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('There was a problem with the fetch operation:', error);
+    return [];
   }
-  passwords.push(data)
-  SecureStore.setItemAsync('passwords', JSON.stringify(passwords))
+};
+
+
+export const addPassword = async (service, loginId, password) => {
+  const data = {
+    service,
+    loginId,
+    password,
+    metadata: {
+      alg: "SHA256"
+    } 
+  }
+  try {
+    const response = await fetch('http://192.168.1.109:9500/api/credentials', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const responseData = await response.json();
+    return responseData;
+  } catch (error) {
+    console.error('There was a problem with the fetch operation:', error);
+    return null;
+  }
 }
 
-export const deletePassword = async siteId => {
-  let passwords = await getAllPasswords()
-  passwords = passwords.filter(password => password.siteId !== siteId)
-  SecureStore.setItemAsync('passwords', JSON.stringify(passwords))
+export const deletePassword = async (id) => {
+  try {
+    const response = await fetch(`http://192.168.1.109:9500/api/credentials/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('There was a problem with the fetch operation:', error);
+    return false;
+  }
 }
