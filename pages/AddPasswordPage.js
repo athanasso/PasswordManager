@@ -4,16 +4,16 @@ import TextInputBox from '../components/TextInputBox';
 import { addPassword } from '../helpers/helper';
 
 export default function AddPasswordPage({ navigation }) {
-    const [siteId, setSiteId] = useState('');
+    const [service, setService] = useState('');
     const [loginId, setLoginId] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState(undefined);
 
     const handleSubmit = async () => {
-        if(siteId.trim() === '' || loginId.trim() === '' || password.trim() === '') {
+        if(service.trim() === '' || loginId.trim() === '' || password.trim() === '') {
             setErrorMessage('Invalid input');
         } else {
-            await addPassword(siteId, loginId, password);
+            await addPassword(service, loginId, password);
             navigation.goBack(null);
         }
     }
@@ -24,14 +24,14 @@ export default function AddPasswordPage({ navigation }) {
                 <View>
                     <Text style={styles.title}>Add Password</Text>
                 </View>
-                <TextInputBox label="Site" onChangeText={(text) => setSiteId(text)} handleSubmit={handleSubmit} />
+                <TextInputBox label="Service" onChangeText={(text) => setService(text)} handleSubmit={handleSubmit} />
                 <TextInputBox label="Login ID" onChangeText={(text) => setLoginId(text)} handleSubmit={handleSubmit} />
                 <TextInputBox label="Password" onChangeText={(text) => setPassword(text)} handleSubmit={handleSubmit} />
                 <Button 
                     title="Submit"
                     color="#2196f3"
                     onPress={handleSubmit}
-                    disabled={siteId === '' || loginId === '' || password === ''}
+                    disabled={service === '' || loginId === '' || password === ''}
                 />
                 {errorMessage && <Text>{errorMessage}</Text>}
             </ScrollView>
